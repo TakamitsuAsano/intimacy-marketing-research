@@ -28,6 +28,10 @@ st.markdown("""
         border-radius: 0.5rem;
         border-left: 5px solid #00a8cc;
     }
+    /* サイドバーの入力欄を目立たせる */
+    .stTextInput > label {
+        font-weight: bold;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -38,24 +42,43 @@ with st.sidebar:
     
     st.markdown("---")
     
-    # 入力フォーム
+    # 1. テーマ入力
     target_topic = st.text_input(
         "リサーチしたいテーマ・キーワード", 
         value="便量", 
         help="例：便量、睡眠の質、激辛食品、ソロキャンプ など"
     )
     
+    # 2. 便益入力
     target_benefit = st.text_input(
         "想定される便益（任意）", 
         value="美容や健康につながる", 
         help="例：美容や健康につながる、ストレス解消になる、自己肯定感が上がる"
     )
     
-    target_region = st.selectbox(
-        "対象エリア",
-        ["全世界（Global）", "北米・欧州中心", "アジア中心", "日本国内のみ"],
+    # 3. エリア選択（韓国追加・自由入力対応）
+    region_options = [
+        "全世界（Global）", 
+        "韓国（South Korea）", 
+        "北米・欧州中心", 
+        "アジア中心", 
+        "日本国内のみ", 
+        "その他（自由入力）"
+    ]
+    
+    selected_region_option = st.selectbox(
+        "対象エリアを選択",
+        region_options,
         index=0
     )
+    
+    # 「その他」が選ばれた場合のみ、テキスト入力欄を表示し、その値を採用する
+    if selected_region_option == "その他（自由入力）":
+        custom_region = st.text_input("エリアを具体的に入力してください", placeholder="例：北欧、ブラジル、東南アジア全域など")
+        # 入力が空の場合はデフォルト値を設定（エラー回避）
+        target_region = custom_region if custom_region else "全世界"
+    else:
+        target_region = selected_region_option
 
     st.markdown("---")
     st.markdown("""
@@ -119,7 +142,7 @@ prompt_template = f"""
 col1, col2 = st.columns([2, 1])
 
 with col1:
-    st.markdown("### 📋 生成されたプロンプト")
+    st.markdown(f"### 📋 生成されたプロンプト （対象：{target_region}）")
     st.info("右上のコピーボタンを押して、Geminiに入力してください。")
     # codeブロックを使うと、自動的にコピーボタンが付与されます
     st.code(prompt_template, language="markdown")
